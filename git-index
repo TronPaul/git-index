@@ -77,7 +77,9 @@ def commit_documents(commit):
         diff = commit.tree.diff_to_tree()
     for patch_or_delta in diff:
         for hunk in patch_or_delta.hunks:
-            yield DiffHunk(commit_sha=str(commit.id), path=patch_or_delta.delta.new_file.path, lines=[dict(type=l.origin, content=l.content) for l in hunk.lines])
+            yield DiffHunk(commit_sha=str(commit.id),
+                           path=patch_or_delta.delta.new_file.path,
+                           lines=[dict(type=l.origin, content=l.content) for l in hunk.lines])
 
 
 if __name__ == '__main__':
