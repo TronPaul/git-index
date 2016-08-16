@@ -12,13 +12,21 @@ import pygit2
 
 repo = pygit2.Repository(os.getcwd())
 es = elasticsearch.Elasticsearch(hosts=list(repo.config.get_multivar('git-index.host')))
-# TODO: assumes ssh remote named origin
-index_name = repo.config['git-index.index'] if 'git-index.index' in repo.config else repo.remotes['origin'].url.split(':')[1].split('/')[1].split('.')[0]
+
+
+def get_index_name():
+    if 'git-index.index' in repo.config:
+        return repo.config['git-index.index']
+    elif 'origin' in repo.remotes:
+        return repo.remotes['origin'].url.split(':')[1].split('/')[1].split('.')[0]
+    elif len(repo.remotes) != 0:
+        return next(repo.remotes).url.split(':')[1].split('/')[1].split('.')[0]
+    else:
+        return 'test'
 
 
 def expand_doc_callback(name):
     def expand_doc(doc):
-        print(doc.to_dict())
         return dict(index=dict(_index=name, _type=doc._doc_type.name)), doc.to_dict()
     return expand_doc
 
@@ -55,7 +63,8 @@ def index(commit, follow=False):
         documents = commit_documents(commit)
     else:
         documents = (commit_documents(c) for c in repo.walk(commit))
-    res = [rv for rv in streaming_bulk(es, documents, expand_action_callback=expand_doc_callback('test'))]
+    res = [rv for rv in streaming_bulk(es, documents, expand_action_callback=expand_doc_callback(get_index_name()))]
+    print("Successfully indexed {}/{} documents".format(sum(1 for r, _ in res if r), len(res)))
 
 
 def commit_documents(commit):
