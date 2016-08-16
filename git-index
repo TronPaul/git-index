@@ -2,6 +2,7 @@
 
 import argparse
 import os
+from itertools import chain
 from datetime import datetime
 
 import elasticsearch
@@ -62,7 +63,7 @@ def index(commit, follow=False):
     if not follow:
         documents = commit_documents(commit)
     else:
-        documents = (commit_documents(c) for c in repo.walk(commit))
+        documents = chain.from_iterable(commit_documents(c) for c in repo.walk(commit.id))
     res = [rv for rv in streaming_bulk(es, documents, expand_action_callback=expand_doc_callback(get_index_name()))]
     print("Successfully indexed {}/{} documents".format(sum(1 for r, _ in res if r), len(res)))
 
