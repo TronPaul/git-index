@@ -1,0 +1,78 @@
+#!/usr/bin/env python3
+
+import argparse
+import os
+from datetime import datetime
+
+import elasticsearch
+from elasticsearch.helpers import streaming_bulk
+from elasticsearch_dsl import DocType, String, Date, Nested, InnerObjectWrapper
+import pygit2
+
+
+repo = pygit2.Repository(os.getcwd())
+es = elasticsearch.Elasticsearch(hosts=list(repo.config.get_multivar('git-index.host')))
+# TODO: assumes ssh remote named origin
+index_name = repo.config['git-index.index'] if 'git-index.index' in repo.config else repo.remotes['origin'].url.split(':')[1].split('/')[1].split('.')[0]
+
+
+def expand_doc_callback(name):
+    def expand_doc(doc):
+        print(doc.to_dict())
+        return dict(index=dict(_index=name, _type=doc._doc_type.name)), doc.to_dict()
+    return expand_doc
+
+
+class Author(InnerObjectWrapper):
+    pass
+
+
+class DiffLine(InnerObjectWrapper):
+    pass
+
+
+class Commit(DocType):
+    author = Nested(properties={
+        'name': String(),
+        'email': String()
+    })
+    committed_date = Date()
+    message = String()
+
+
+class DiffHunk(DocType):
+    commit_sha = String()
+    path = String()
+    lines = Nested(properties={
+        'type': String(index='not_analyzed'),
+        'content': String()
+    })
+
+
+def index(commit, follow=False):
+    commit = repo.revparse_single(commit)
+    if not follow:
+        documents = commit_documents(commit)
+    else:
+        documents = (commit_documents(c) for c in repo.walk(commit))
+    res = [rv for rv in streaming_bulk(es, documents, expand_action_callback=expand_doc_callback('test'))]
+
+
+def commit_documents(commit):
+    yield Commit(sha=str(commit.id), author=dict(name=commit.author.name, email=commit.author.email),
+                 committed_date=datetime.fromtimestamp(commit.commit_time), message=commit.message)
+    if commit.parents:
+        diff = repo.diff(commit.parents[0], commit)
+    else:
+        diff = commit.tree.diff_to_tree()
+    for patch_or_delta in diff:
+        for hunk in patch_or_delta.hunks:
+            yield DiffHunk(commit_sha=str(commit.id), path=patch_or_delta.delta.new_file.path, lines=[dict(type=l.origin, content=l.content) for l in hunk.lines])
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument(metavar='commit-ish', default='HEAD', nargs='?', dest='commit')
+    parser.add_argument('--follow', action='store_true', default=False)
+    args = parser.parse_args()
+    index(args.commit, follow=args.follow)
