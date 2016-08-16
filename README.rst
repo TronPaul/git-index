@@ -12,7 +12,7 @@ Installation
 Configuration
 =============
 
-* Add the following to your repository's git config
+* Add the following to your repository's git config::
 
     [git-index]
         host = localhost
