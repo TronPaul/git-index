@@ -3,7 +3,7 @@ from setuptools import setup
 setup(
     name='git-index',
     version='0.0.1',
-    py_modules=['git_index'],
+    packages=['git_index'],
     url='',
     license='',
     author='Mark McGuire',
