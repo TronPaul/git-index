@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import argparse
 import os
 from itertools import chain
@@ -7,12 +5,13 @@ from datetime import datetime
 
 import elasticsearch
 from elasticsearch.helpers import streaming_bulk
-from elasticsearch_dsl import DocType, String, Date, Nested, InnerObjectWrapper
+from elasticsearch_dsl import DocType, String, Date, Nested, InnerObjectWrapper, Search, Q
+from elasticsearch_dsl.connections import connections
 import pygit2
 
 
 repo = pygit2.Repository(os.getcwd())
-es = elasticsearch.Elasticsearch(hosts=list(repo.config.get_multivar('git-index.host')))
+es = connections.create_connection(hosts=list(repo.config.get_multivar('git-index.host')))
 
 
 def get_index_name():
@@ -58,8 +57,11 @@ class DiffHunk(DocType):
     })
 
 
-def index(commit, follow=False):
+def index(commit, follow=False, mappings=True):
     commit = repo.revparse_single(commit)
+    if mappings:
+        Commit.init(get_index_name())
+        DiffHunk.init(get_index_name())
     if not follow:
         documents = commit_documents(commit)
     else:
@@ -82,9 +84,23 @@ def commit_documents(commit):
                            lines=[dict(type=l.origin, content=l.content) for l in hunk.lines])
 
 
-if __name__ == '__main__':
+def search(query):
+        s = Search().query(Q({'match': {'lines.content': query}}) & Q({'term': {'lines.type': '+'}}))
+        rv = s.execute()
+        print(rv)
+
+
+def index_entry():
     parser = argparse.ArgumentParser()
     parser.add_argument(metavar='commit-ish', default='HEAD', nargs='?', dest='commit')
     parser.add_argument('--follow', action='store_true', default=False)
+    parser.add_argument('--no-mappings', action='store_false', dest='mappings', default=True)
     args = parser.parse_args()
-    index(args.commit, follow=args.follow)
+    index(args.commit, follow=args.follow, mappings=args.mappings)
+
+
+def search_entry():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('query')
+    args = parser.parse_args()
+    search(args.query)
