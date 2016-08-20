@@ -52,7 +52,7 @@ class DiffHunk(DocType):
     path = String()
     lines = Nested(properties={
         'type': String(index='not_analyzed'),
-        'content': String()
+        'content': String(analyzer='code')
     })
 
 
@@ -88,10 +88,11 @@ def search(query):
                                                                     Q({'term': {'lines.type': '+'}}))
     rv = s.execute()
     for h in rv.hits:
-        print(h.path)
+        print('commit', h.commit_sha)
+        print('path', h.path)
         if hasattr(h.meta, 'inner_hits'):
             for ih in h.meta.inner_hits.lines:
-                print(ih.content)
+                print(ih.content.strip())
 
 
 def index_entry():
