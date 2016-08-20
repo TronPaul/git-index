@@ -3,12 +3,10 @@ import os
 from itertools import chain
 from datetime import datetime
 
-import elasticsearch
 from elasticsearch.helpers import streaming_bulk
 from elasticsearch_dsl import DocType, String, Date, Nested, InnerObjectWrapper, Search, Q
 from elasticsearch_dsl.connections import connections
 import pygit2
-
 
 repo = pygit2.Repository(os.getcwd())
 es = connections.create_connection(hosts=list(repo.config.get_multivar('git-index.host')))
@@ -28,6 +26,7 @@ def get_index_name():
 def expand_doc_callback(name):
     def expand_doc(doc):
         return dict(index=dict(_index=name, _type=doc._doc_type.name)), doc.to_dict()
+
     return expand_doc
 
 
@@ -74,7 +73,7 @@ def commit_documents(commit):
     yield Commit(sha=str(commit.id), author=dict(name=commit.author.name, email=commit.author.email),
                  committed_date=datetime.fromtimestamp(commit.commit_time), message=commit.message)
     if commit.parents:
-        diff = repo.diff(commit.parents[0], commit)
+        diff = repo.diff(commit, commit.parents[0])
     else:
         diff = commit.tree.diff_to_tree()
     for patch_or_delta in diff:
@@ -85,9 +84,14 @@ def commit_documents(commit):
 
 
 def search(query):
-        s = Search().query(Q({'match': {'lines.content': query}}) & Q({'term': {'lines.type': '+'}}))
-        rv = s.execute()
-        print(rv)
+    s = Search().query('nested', path='lines', inner_hits={}, query=Q({'match': {'lines.content': query}}) &
+                                                                    Q({'term': {'lines.type': '+'}}))
+    rv = s.execute()
+    for h in rv.hits:
+        print(h.path)
+        if hasattr(h.meta, 'inner_hits'):
+            for ih in h.meta.inner_hits.lines:
+                print(ih.content)
 
 
 def index_entry():
