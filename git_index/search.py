@@ -59,10 +59,6 @@ def open_pager(args):
         pass
 
 
-def create_pager():
-    return subprocess.Popen(['less', '-F', '-R', '-S', '-X', '-K'], stdin=subprocess.PIPE, universal_newlines=True)
-
-
 def search(repo, query, tree_sort=True, pager=True):
     s = Search()
     q = Q('nested', path='lines', inner_hits={}, query=Q({'match': {'lines.content': query}}) & Q({'term': {'lines.type': '+'}}))
