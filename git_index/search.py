@@ -1,6 +1,4 @@
 import itertools
-import os
-import sys
 import subprocess
 import pygit2
 from elasticsearch_dsl import Q, Search
