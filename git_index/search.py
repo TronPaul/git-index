@@ -14,15 +14,19 @@ class Hit:
         return "\033[1mpath /{}\033[0m".format(self.hit.path)
 
     @property
-    def inner_hits(self):
-        hits = []
-        for ih in self.hit.meta.inner_hits.lines:
-            color = "\033[32m" if ih.type == '+' else "\033[31m"
-            hits.append('{color}{type}{content}\033[0m'.format(color=color, type=ih.type, content=ih.content.strip()))
-        return '\n'.join(hits)
+    def contents(self):
+        inner_hit_offsets = set(ih.meta.nested.offset for ih in self.hit.meta.inner_hits.lines)
+        lines = []
+        for i, l in enumerate(self.hit.lines):
+            color = "\033[32m" if l.type == '+' else "\033[31m"
+            line = '{color}{type}{content}\033[0m'.format(color=color, type=l.type, content=l.content.rstrip())
+            if i in inner_hit_offsets:
+                line = '\033[1m' + line
+            lines.append(line)
+        return '\n'.join(lines)
 
     def __str__(self):
-        return '\n'.join((self.commit_line, self.path_line, self.inner_hits))
+        return '\n'.join((self.commit_line, self.path_line, self.contents))
 
 
 def search(query):

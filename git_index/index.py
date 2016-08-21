@@ -2,7 +2,7 @@ from datetime import datetime
 from itertools import chain
 
 from elasticsearch.helpers import streaming_bulk
-from elasticsearch_dsl import DocType, String, Date, Nested, InnerObjectWrapper
+from elasticsearch_dsl import DocType, String, Date, Nested, InnerObjectWrapper, Integer
 
 
 def get_index_name(repo):
@@ -43,6 +43,10 @@ class Commit(DocType):
 class DiffHunk(DocType):
     commit_sha = String()
     path = String()
+    old_start = Integer()
+    old_lines = Integer()
+    new_start = Integer()
+    new_lines = Integer()
     lines = Nested(properties={
         'type': String(index='not_analyzed'),
         'content': String(analyzer='code')
@@ -73,4 +77,8 @@ def commit_documents(repo, commit):
         for hunk in patch_or_delta.hunks:
             yield DiffHunk(commit_sha=str(commit.id),
                            path=patch_or_delta.delta.new_file.path,
+                           old_start=hunk.old_start,
+                           old_lines=hunk.old_lines,
+                           new_start=hunk.new_start,
+                           new_lines=hunk.new_lines,
                            lines=[dict(type=l.origin, content=l.content) for l in hunk.lines])
