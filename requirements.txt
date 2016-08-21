@@ -1,8 +1,0 @@
-cffi==1.7.0
-elasticsearch==2.3.0
-elasticsearch-dsl==2.1.0
-pycparser==2.14
-pygit2==0.24.1
-python-dateutil==2.5.3
-six==1.10.0
-urllib3==1.16
