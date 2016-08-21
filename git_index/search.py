@@ -5,7 +5,15 @@ import subprocess
 import pygit2
 from itertools import groupby
 from elasticsearch_dsl import Q, Search
-from termcolor import cprint
+from termcolor import COLORS, ATTRIBUTES
+
+
+def get_colors(use=True):
+    colors = {**COLORS, **ATTRIBUTES, 'ENDC': 0}
+    if use:
+        return {c: '\x1b[{}m'.format(i) for c, i in colors.items()}
+    else:
+        return {c: '' for c in colors}
 
 
 def line_offsets(hit):
@@ -39,9 +47,10 @@ def line_count(lines, type='-'):
     return sum([1 for l in lines if l.type in (type, ' ')])
 
 
-def print_hit(hit, out_file, context=5):
-    cprint('commit {}'.format(hit.commit_sha), 'yellow', file=out_file)
-    cprint('path /{}'.format(hit.path), attrs=['bold'], file=out_file)
+def print_hit(hit, out_file, context=5, colorize=True):
+    colors = get_colors(colorize)
+    print('{}commit {}{}'.format(colors['yellow'], hit.commit_sha, colors['ENDC']), file=out_file)
+    print('{}path /{}{}'.format(colors['bold'], hit.path, colors['ENDC']), file=out_file)
     offsets = line_offsets(hit)
     line_nums = relevant_line_numbers(hit.lines, offsets, context)
     groups = [[i[1] for i in g] for k, g in groupby(enumerate(sorted(line_nums)), sub_list)]
@@ -50,19 +59,19 @@ def print_hit(hit, out_file, context=5):
         old_lines = line_count(hit.lines[group[0]:group[-1]+1])
         new_start = line_count(hit.lines[0:group[0]], type='+') + hit.new_start
         new_lines = line_count(hit.lines[group[0]:group[-1]+1], type='+')
-        cprint('@@ -{},{} +{},{} @@'.format(old_start, old_lines, new_start, new_lines), 'cyan', file=out_file)
+        print('{}@@ -{},{} +{},{} @@{}'.format(colors['cyan'], old_start, old_lines, new_start, new_lines, colors['ENDC']), file=out_file)
         for line_pos in group:
             line = hit.lines[line_pos]
             color = None
-            attrs = None
+            bold = False
             if line.type == '+':
                 color = 'green'
             elif line.type == '-':
                 color = 'red'
             if line_pos in offsets:
-                attrs = ['bold']
+                bold = True
             text = line.type + line.content.rstrip()
-            cprint(text, color=color, attrs=attrs, file=out_file)
+            print('{}{}{}{}'.format(colors['bold'] if bold else '', colors[color] if color else '', text, colors['ENDC']), file=out_file)
 
 
 @contextlib.contextmanager
@@ -78,7 +87,7 @@ def open_pager(args):
         pass
 
 
-def search(repo, query, tree_sort=True, pager=True):
+def search(repo, query, tree_sort=True, pager=True, colorize=True):
     s = Search()
     q = Q('nested', path='lines', inner_hits={}, query=Q({'match': {'lines.content': query}}) & Q({'term': {'lines.type': '+'}}))
     if tree_sort:
@@ -94,5 +103,5 @@ def search(repo, query, tree_sort=True, pager=True):
         else:
             out = None
         for h in hits:
-            print_hit(h, out)
+            print_hit(h, out, colorize=colorize)
 

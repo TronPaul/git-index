@@ -75,3 +75,29 @@ class SearchTest(unittest.TestCase):
                                            '\x1b[31m-This is an removal\x1b[0m\n\x1b[1m\x1b[32m+This is an addition\x1b[0m\n'
                                            '\x1b[31m-This is an removal\x1b[0m\n\x1b[32m+This is an addition\x1b[0m\n'
                                            '\x1b[31m-This is an removal\x1b[0m\n\x1b[32m+This is an addition\x1b[0m\n'))
+
+    def test_no_color(self):
+        hit = mock.MagicMock()
+        hit.commit_sha = 'fake_sha'
+        hit.path = 'fake_path'
+        hit.meta.inner_hits.lines = [self.create_inner_hit(5)]
+        hit.lines = [self.create_line('-', 'This is an removal'),
+                     self.create_line('+', 'This is an addition'),
+                     self.create_line('-', 'This is an removal'),
+                     self.create_line('+', 'This is an addition'),
+                     self.create_line('-', 'This is an removal'),
+                     self.create_line('+', 'This is an addition'),
+                     self.create_line('-', 'This is an removal'),
+                     self.create_line('+', 'This is an addition'),
+                     self.create_line('-', 'This is an removal'),
+                     self.create_line('+', 'This is an addition')]
+        hit.old_start = hit.new_start = 0
+        file = StringIO()
+        print_hit(hit, file, context=5, colorize=False)
+        self.assertEqual(file.getvalue(), ('commit fake_sha\npath /fake_path\n'
+                                           '@@ -0,5 +0,5 @@\n'
+                                           '-This is an removal\n+This is an addition\n'
+                                           '-This is an removal\n+This is an addition\n'
+                                           '-This is an removal\n+This is an addition\n'
+                                           '-This is an removal\n+This is an addition\n'
+                                           '-This is an removal\n+This is an addition\n'))
