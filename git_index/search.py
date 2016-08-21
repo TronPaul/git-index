@@ -1,3 +1,4 @@
+import contextlib
 import itertools
 import subprocess
 import pygit2
@@ -45,11 +46,24 @@ def print_hit(hit, out_file, context=5):
         cprint(text, color=color, attrs=attrs, file=out_file)
 
 
+@contextlib.contextmanager
+def open_pager(args):
+    try:
+        pager = subprocess.Popen(args, stdin=subprocess.PIPE, universal_newlines=True)
+        try:
+            yield pager.stdin
+        finally:
+            pager.stdin.close()
+            pager.wait()
+    except KeyboardInterrupt:
+        pass
+
+
 def create_pager():
     return subprocess.Popen(['less', '-F', '-R', '-S', '-X', '-K'], stdin=subprocess.PIPE, universal_newlines=True)
 
 
-def search(repo, query, tree_sort=True):
+def search(repo, query, tree_sort=True, pager=False):
     s = Search()
     q = Q('nested', path='lines', inner_hits={}, query=Q({'match': {'lines.content': query}}) & Q({'term': {'lines.type': '+'}}))
     if tree_sort:
@@ -59,11 +73,7 @@ def search(repo, query, tree_sort=True):
     hits = rv.hits
     if tree_sort:
         hits = tree_sort_hits(repo, hits)
-    try:
-        p = create_pager()
+    with open_pager(['less', '-F', '-R', '-S', '-X', '-K']) as pager_file:
         for h in hits:
-            print_hit(h, p.stdin)
-        p.stdin.close()
-        p.wait()
-    except KeyboardInterrupt:
-        pass
+            print_hit(h, pager_file)
+
