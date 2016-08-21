@@ -87,7 +87,7 @@ def open_pager(args):
         pass
 
 
-def search(repo, query, tree_sort=True, pager=True, colorize=True):
+def search(repo, query, tree_sort=True, pager=True, context=5, colorize=True):
     s = Search()
     q = Q('nested', path='lines', inner_hits={}, query=Q({'match': {'lines.content': query}}) & Q({'term': {'lines.type': '+'}}))
     if tree_sort:
@@ -103,5 +103,5 @@ def search(repo, query, tree_sort=True, pager=True, colorize=True):
         else:
             out = None
         for h in hits:
-            print_hit(h, out, colorize=colorize)
+            print_hit(h, out, colorize=colorize, context=context)
 
