@@ -1,7 +1,9 @@
 import contextlib
 import itertools
+import operator
 import subprocess
 import pygit2
+from itertools import groupby
 from elasticsearch_dsl import Q, Search
 from termcolor import cprint
 
@@ -29,23 +31,38 @@ def tree_sort_hits(repo, hits):
     return sorted_hits
 
 
+def sub_list(l):
+    return operator.sub(*l)
+
+
+def line_count(lines, type='-'):
+    return sum([1 for l in lines if l.type in (type, ' ')])
+
+
 def print_hit(hit, out_file, context=5):
     cprint('commit {}'.format(hit.commit_sha), 'yellow', file=out_file)
     cprint('path /{}'.format(hit.path), attrs=['bold'], file=out_file)
     offsets = line_offsets(hit)
     line_nums = relevant_line_numbers(hit.lines, offsets, context)
-    for line_pos in sorted(line_nums):
-        line = hit.lines[line_pos]
-        color = None
-        attrs = None
-        if line.type == '+':
-            color = 'green'
-        elif line.type == '-':
-            color = 'red'
-        if line_pos in offsets:
-            attrs = ['bold']
-        text = line.type + line.content.rstrip()
-        cprint(text, color=color, attrs=attrs, file=out_file)
+    groups = [[i[1] for i in g] for k, g in groupby(enumerate(sorted(line_nums)), sub_list)]
+    for group in groups:
+        old_start = line_count(hit.lines[0:group[0]]) + hit.old_start
+        old_lines = line_count(hit.lines[group[0]:group[-1]+1])
+        new_start = line_count(hit.lines[0:group[0]], type='+') + hit.new_start
+        new_lines = line_count(hit.lines[group[0]:group[-1]+1], type='+')
+        cprint('@@ -{},{} +{},{} @@'.format(old_start, old_lines, new_start, new_lines), 'cyan', file=out_file)
+        for line_pos in group:
+            line = hit.lines[line_pos]
+            color = None
+            attrs = None
+            if line.type == '+':
+                color = 'green'
+            elif line.type == '-':
+                color = 'red'
+            if line_pos in offsets:
+                attrs = ['bold']
+            text = line.type + line.content.rstrip()
+            cprint(text, color=color, attrs=attrs, file=out_file)
 
 
 @contextlib.contextmanager
