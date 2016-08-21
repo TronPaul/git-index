@@ -36,7 +36,7 @@ def print_hit(hit, out_file, context=5):
     line_nums = relevant_line_numbers(hit.lines, offsets, context)
     for line_pos in sorted(line_nums):
         line = hit.lines[line_pos]
-        color = 'white'
+        color = None
         attrs = None
         if line.type == '+':
             color = 'green'
