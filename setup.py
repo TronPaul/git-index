@@ -9,6 +9,11 @@ setup(
     author='Mark McGuire',
     author_email='',
     description='',
+    install_requires=[
+        'elasticsearch>=2.3.0',
+        'elasticsearch-dsl>=2.1.0',
+        'pygit2>=0.24.1'
+    ],
     entry_points={
         'console_scripts': [
             'git-index=git_index:index_entry',
