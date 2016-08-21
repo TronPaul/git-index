@@ -63,7 +63,7 @@ def create_pager():
     return subprocess.Popen(['less', '-F', '-R', '-S', '-X', '-K'], stdin=subprocess.PIPE, universal_newlines=True)
 
 
-def search(repo, query, tree_sort=True, pager=False):
+def search(repo, query, tree_sort=True, pager=True):
     s = Search()
     q = Q('nested', path='lines', inner_hits={}, query=Q({'match': {'lines.content': query}}) & Q({'term': {'lines.type': '+'}}))
     if tree_sort:
@@ -73,7 +73,11 @@ def search(repo, query, tree_sort=True, pager=False):
     hits = rv.hits
     if tree_sort:
         hits = tree_sort_hits(repo, hits)
-    with open_pager(['less', '-F', '-R', '-S', '-X', '-K']) as pager_file:
+    with contextlib.ExitStack() as stack:
+        if pager:
+            out = stack.enter_context(open_pager(['less', '-F', '-R', '-S', '-X', '-K']))
+        else:
+            out = None
         for h in hits:
-            print_hit(h, pager_file)
+            print_hit(h, out)
 
