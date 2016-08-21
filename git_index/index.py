@@ -49,7 +49,7 @@ class DiffHunk(DocType):
     new_lines = Integer()
     lines = Nested(properties={
         'type': String(index='not_analyzed'),
-        'content': String(analyzer='code')
+        'content': String(analyzer='code')  # TODO: make configurable
     })
 
 
