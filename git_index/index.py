@@ -32,6 +32,7 @@ class DiffLine(InnerObjectWrapper):
 
 
 class Commit(DocType):
+    sha = String()
     author = Nested(properties={
         'name': String(),
         'email': String()
