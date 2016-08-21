@@ -21,5 +21,6 @@ def index_entry():
 def search_entry():
     parser = argparse.ArgumentParser()
     parser.add_argument('query')
+    parser.add_argument('--no-pager', action='store_false', dest='pager', default=True)
     args = parser.parse_args()
-    search(repo, args.query)
+    search(repo, args.query, pager=args.pager)
