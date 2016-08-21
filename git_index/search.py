@@ -11,6 +11,8 @@ def line_offsets(hit):
 
 
 def relevant_line_numbers(lines, offsets, context):
+    if not context:
+        return offsets
     return set(itertools.chain.from_iterable(range(max(0, o - context), min(o + context, len(lines)))
                                              for o in offsets))
 

@@ -20,5 +20,9 @@ setup(
             'git-index=git_index:index_entry',
             'git-search=git_index:search_entry'
         ]
-    }
+    },
+    test_suite = 'nose.collector',
+    tests_require=[
+        'nose>=1.3.7'
+    ]
 )
