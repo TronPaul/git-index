@@ -12,7 +12,8 @@ setup(
     install_requires=[
         'elasticsearch>=2.3.0',
         'elasticsearch-dsl>=2.1.0',
-        'pygit2>=0.24.1'
+        'pygit2>=0.24.1',
+        'termcolor>=1.1.0'
     ],
     entry_points={
         'console_scripts': [
