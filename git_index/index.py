@@ -71,7 +71,7 @@ def commit_documents(repo, commit):
     yield Commit(sha=str(commit.id), author=dict(name=commit.author.name, email=commit.author.email),
                  committed_date=datetime.fromtimestamp(commit.commit_time), message=commit.message)
     if commit.parents:
-        diff = repo.diff(commit, commit.parents[0])
+        diff = repo.diff(commit.parents[0], commit)
     else:
         diff = commit.tree.diff_to_tree()
     for patch_or_delta in diff:
