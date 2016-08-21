@@ -13,11 +13,11 @@ Installation
 Configuration
 -------------
 
-git-index looks for a `[git-index]` block in the Git configuration. The current
+git-index looks for a ``[git-index]`` block in the Git configuration. The current
 configuration options are:
 
-* `host` - the hostname of the Elasticsearch server(s) you wish to use
-* `index` (optional) - the name of the index you wish to use (git-index will
+* ``host`` - the hostname of the Elasticsearch server(s) you wish to use
+* ``index`` (optional) - the name of the index you wish to use (git-index will
   default to the name of the origin repo if not specified)
 
 Example::
@@ -30,4 +30,4 @@ Example::
 Usage
 -----
 
-* See `git-index --help` for up to date usage
+* See ``git-index --help`` for up to date usage
