@@ -22,4 +22,4 @@ def search_entry():
     parser = argparse.ArgumentParser()
     parser.add_argument('query')
     args = parser.parse_args()
-    search(args.query)
+    search(repo, args.query)

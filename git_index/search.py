@@ -1,5 +1,6 @@
 import curses
 import itertools
+import pygit2
 from elasticsearch_dsl import Q, Search
 
 
@@ -64,20 +65,45 @@ class HitsWindow:
         line_nums = relevant_line_numbers(hit.lines, offsets, self.context)
         for i, line_pos in enumerate(sorted(line_nums)):
             line = hit.lines[line_pos]
-            color = curses.color_pair(3) if line.type == '+' else curses.color_pair(2)
-            text = line.type + line.content.rstrip()
+            attrs = []
+            if line.type == '+':
+                attrs.append(curses.color_pair(3))
+            elif line.type == '-':
+                attrs.append(curses.color_pair(2))
             if line_pos in offsets:
-                self.pad.addstr(y + 2 + i, 0, text, color | curses.A_BOLD)
-            else:
-                self.pad.addstr(y + 2 + i, 0, text, color)
+                attrs.append(curses.A_BOLD)
+            # why isn't there a pythonic one-liner for this?
+            attr_val = 0
+            for a in attrs:
+                attr_val |= a
+            text = line.type + line.content.rstrip()
+            self.pad.addstr(y + 2 + i, 0, text, attr_val)
         return y + 2 + len(line_nums)
 
 
-def search(query):
-    s = Search().query('nested', path='lines', inner_hits={}, query=Q({'match': {'lines.content': query}}) &
-                                                                    Q({'term': {'lines.type': '+'}}))
+def tree_sort_hits(repo, hits):
+    hit_dict = {h.commit_sha: h for h in hits}
+    sorted_hits = []
+    # TODO: only sorts from head down
+    for c in repo.walk(repo.head.target, pygit2.GIT_SORT_TOPOLOGICAL):
+        if str(c.id) in hit_dict:
+            sorted_hits.append(hit_dict[str(c.id)])
+            if len(sorted_hits) == len(hits):
+                break
+    return sorted_hits
+
+
+def search(repo, query, tree_sort=True):
+    s = Search()
+    q = Q('nested', path='lines', inner_hits={}, query=Q({'match': {'lines.content': query}}) & Q({'term': {'lines.type': '+'}}))
+    if tree_sort:
+        q = Q('constant_score', query=q)
+    s.query = q
     rv = s.execute()
-    curses.wrapper(display, rv.hits)
+    hits = rv.hits
+    if tree_sort:
+        hits = tree_sort_hits(repo, hits)
+    curses.wrapper(display, hits)
 
 
 def display(stdscr, hits):
