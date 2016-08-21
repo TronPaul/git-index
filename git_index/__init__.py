@@ -10,10 +10,10 @@ es = connections.create_connection(hosts=list(repo.config.get_multivar('git-inde
 
 
 def index_entry():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="Index commits to Elasticsearch index")
     parser.add_argument(metavar='commit-ish', default='HEAD', nargs='?', dest='commit')
-    parser.add_argument('--follow', action='store_true', default=False)
-    parser.add_argument('--no-mappings', action='store_false', dest='mappings', default=True)
+    parser.add_argument('--follow', action='store_true', default=False, help='Also index commits reachable by following <commit-ish>')
+    parser.add_argument('--no-mappings', action='store_false', dest='mappings', default=True, help='Do not send mappings to Elasticsearch')
     args = parser.parse_args()
     index(repo, es, args.commit, follow=args.follow, mappings=args.mappings)
 
@@ -21,6 +21,6 @@ def index_entry():
 def search_entry():
     parser = argparse.ArgumentParser()
     parser.add_argument('query')
-    parser.add_argument('--no-pager', action='store_false', dest='pager', default=True)
+    parser.add_argument('--no-pager', action='store_false', dest='pager', default=True, help="Do not use a pager (ie less)")
     args = parser.parse_args()
     search(repo, args.query, pager=args.pager)
