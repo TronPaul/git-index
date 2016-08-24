@@ -1,7 +1,9 @@
 git-index
 =========
 
-*index Git commit diffs and metadata into elasticsearch*
+[![Build Status](https://travis-ci.org/TronPaul/git-index.svg?branch=master)](https://travis-ci.org/TronPaul/git-index)
+
+*Index Git commit diffs and metadata into Elasticsearch*
 
 Installation
 ------------
