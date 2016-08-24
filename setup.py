@@ -23,6 +23,9 @@ setup(
     },
     test_suite = 'nose.collector',
     extras_require={
-        'tests': ['nose>=1.3.7']
+        'tests': [
+            'nose>=1.3.7',
+            'mock>=2.0.0'
+        ]
     }
 )

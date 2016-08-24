@@ -1,5 +1,8 @@
 import unittest
-import unittest.mock as mock
+try:
+    import unittest.mock as mock
+except ImportError:
+    import mock
 from io import StringIO
 from git_index.search import print_hit
 
