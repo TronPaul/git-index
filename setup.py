@@ -22,7 +22,7 @@ setup(
         ]
     },
     test_suite = 'nose.collector',
-    tests_require=[
-        'nose>=1.3.7'
-    ]
+    extras_require={
+        'tests': ['nose>=1.3.7']
+    }
 )
