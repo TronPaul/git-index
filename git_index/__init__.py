@@ -5,8 +5,18 @@ from elasticsearch_dsl.connections import connections
 from git_index.index import index
 from git_index.search import search
 
+
 repo = pygit2.Repository(os.getcwd())
-es = connections.create_connection(hosts=list(repo.config.get_multivar('git-index.host')))
+
+
+def get_es_hosts():
+    hosts = list(repo.config.get_multivar('git-index.host'))
+    if hosts:
+        return hosts
+    return ['localhost']
+
+
+es = connections.create_connection(hosts=get_es_hosts())
 
 
 def index_entry():
