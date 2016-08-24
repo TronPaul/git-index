@@ -5,7 +5,11 @@ python:
 - '3.4'
 - '3.5'
 - pypy
+env: LIBGIT2=~/libgit2/_install/ LD_LIBRARY_PATH=~/libgit2/_install/lib
 before_install:
 - sudo apt-get update -qq
-- sudo apt-get install -qq libgit2-dev
-install: pip install .[tests]
+- sudo apt-get install cmake
+- pip install cffi
+- "./.travis.sh"
+install: "pip install .[tests]"
+script: python setup.py test
