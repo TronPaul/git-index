@@ -1,7 +1,8 @@
 git-index
 =========
 
-[![Build Status](https://travis-ci.org/TronPaul/git-index.svg?branch=master)](https://travis-ci.org/TronPaul/git-index)
+.. image:: https://travis-ci.org/TronPaul/git-index.svg?branch=master
+       :target: https://travis-ci.org/TronPaul/git-index
 
 *Index Git commit diffs and metadata into Elasticsearch*
 
