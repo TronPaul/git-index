@@ -9,7 +9,9 @@ from termcolor import COLORS, ATTRIBUTES
 
 
 def get_colors(use=True):
-    colors = {**COLORS, **ATTRIBUTES, 'ENDC': 0}
+    colors = {'ENDC': 0}
+    colors.update(COLORS)
+    colors.update(ATTRIBUTES)
     if use:
         return {c: '\x1b[{}m'.format(i) for c, i in colors.items()}
     else:
