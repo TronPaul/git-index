@@ -3,7 +3,10 @@ try:
     import unittest.mock as mock
 except ImportError:
     import mock
-from io import StringIO
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 from git_index.search import print_hit
 
 
