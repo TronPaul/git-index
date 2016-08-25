@@ -3,6 +3,8 @@ git-index
 
 .. image:: https://travis-ci.org/TronPaul/git-index.svg?branch=master
        :target: https://travis-ci.org/TronPaul/git-index
+.. image:: https://coveralls.io/repos/github/TronPaul/git-index/badge.svg
+   :target: https://coveralls.io/github/TronPaul/git-index
 
 *Index Git commit diffs and metadata into Elasticsearch*
 
