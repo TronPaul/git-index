@@ -11,5 +11,7 @@ before_install:
 - sudo apt-get install cmake
 - pip install cffi
 - "./.travis.sh"
-install: "pip install .[tests]"
+install:
+- "pip install .[tests] coveralls"
 script: python setup.py test
+after_success: coveralls

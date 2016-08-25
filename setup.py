@@ -25,7 +25,8 @@ setup(
     extras_require={
         'tests': [
             'nose>=1.3.7',
-            'mock>=2.0.0'
+            'mock>=2.0.0',
+            'coverage>=4.2'
         ]
     }
 )
