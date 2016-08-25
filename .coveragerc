@@ -1,3 +1,6 @@
+[run]
+include =
+    */git_index/*.py
 [report]
 exclude_lines =
     pragma: no cover
