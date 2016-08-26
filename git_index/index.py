@@ -1,3 +1,4 @@
+import subprocess
 from datetime import datetime, tzinfo, timedelta
 from itertools import chain
 
@@ -60,7 +61,9 @@ def index(repo, es, commit, all=False, follow=False, mappings=True):
         Commit.init(get_index_name(repo))
         DiffHunk.init(get_index_name(repo))
     if all:
-        commits = []
+        # Replace when you can iterate through all revisions via pygit2
+        p = subprocess.Popen(['git', 'rev-list', '--all'], stdout=subprocess.PIPE, universal_newlines=True)
+        commits = (repo.get(c) for c in p.communicate()[0].split())
     elif follow:
         commits = repo.walk(commit.id)
     else:
