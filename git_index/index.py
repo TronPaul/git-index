@@ -19,7 +19,7 @@ def get_index_name(repo):
 
 def expand_doc_callback(name):
     def expand_doc(doc):
-        return dict(index=dict(_index=name, _type=doc._doc_type.name)), doc.to_dict()
+        return dict(index=dict(_index=name, _type=doc._doc_type.name, _id=doc.meta.id)), doc.to_dict()
 
     return expand_doc
 
@@ -43,7 +43,7 @@ class Commit(DocType):
 
 
 class DiffHunk(DocType):
-    commit_sha = String()
+    sha = String()
     path = String()
     old_start = Integer()
     old_lines = Integer()
@@ -88,18 +88,20 @@ def tz_from_offset(offset):
 
 def commit_documents(repo, commit):
     commit_date = datetime.fromtimestamp(commit.commit_time, tz_from_offset(commit.commit_time_offset))
+    doc_id = str(commit.commit_time) + str(commit.id)[:7]
     yield Commit(sha=str(commit.id), author=dict(name=commit.author.name, email=commit.author.email),
-                 committed_date=commit_date, message=commit.message)
+                 committed_date=commit_date, message=commit.message, meta=dict(id=doc_id))
     if commit.parents:
         diff = repo.diff(commit.parents[0], commit)
     else:
         diff = commit.tree.diff_to_tree()
     for patch_or_delta in diff:
         for hunk in patch_or_delta.hunks:
-            yield DiffHunk(commit_sha=str(commit.id),
+            yield DiffHunk(sha=str(commit.id),
                            path=patch_or_delta.delta.new_file.path,
                            old_start=hunk.old_start,
                            old_lines=hunk.old_lines,
                            new_start=hunk.new_start,
                            new_lines=hunk.new_lines,
-                           lines=[dict(type=l.origin, content=l.content) for l in hunk.lines])
+                           lines=[dict(type=l.origin, content=l.content) for l in hunk.lines],
+                           meta=dict(id=doc_id))

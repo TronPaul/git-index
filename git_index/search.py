@@ -34,9 +34,7 @@ def relevant_line_numbers(lines, offsets, context):
 def tree_sort_hits(repo, hits):
     hit_dict = {}
     for h in hits:
-        if h.meta.doc_type == 'diff_hunk':
-            hit_dict.setdefault(h.commit_sha, []).append(h)
-        elif h.meta.doc_type == 'commit':
+        if h.meta.doc_type in ('diff_hunk', 'commit'):
             hit_dict.setdefault(h.sha, []).append(h)
     sorted_hits = []
     # TODO: only sorts from head down
@@ -58,7 +56,7 @@ def line_count(lines, type='-'):
 
 def print_diff_hunk(hit, out_file, context=5, colorize=True):
     colors = get_colors(colorize)
-    print('{}commit {}{}'.format(colors['yellow'], hit.commit_sha, colors['ENDC']), file=out_file)
+    print('{}commit {}{}'.format(colors['yellow'], hit.sha, colors['ENDC']), file=out_file)
     print('{}path /{}{}'.format(colors['bold'], hit.path, colors['ENDC']), file=out_file)
     offsets = line_offsets(hit)
     line_nums = relevant_line_numbers(hit.lines, offsets, context)
