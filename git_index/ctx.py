@@ -17,7 +17,7 @@ def get_index_name(repo):
     elif 'origin' in repo.remotes:
         return repo.remotes['origin'].url.split(':')[1].split('/')[1].split('.')[0]
     elif len(repo.remotes) != 0:
-        return next(repo.remotes).url.split(':')[1].split('/')[1].split('.')[0]
+        return next(iter(repo.remotes)).url.split(':')[1].split('/')[1].split('.')[0]
     else:
         return pathlib.Path(os.getcwd()).parts[-1]
 
