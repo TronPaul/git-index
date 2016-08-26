@@ -25,7 +25,7 @@ class SearchTest(unittest.TestCase):
 
     def test_print_addition(self):
         hit = mock.MagicMock()
-        hit.commit_sha = 'fake_sha'
+        hit.sha = 'fake_sha'
         hit.path = 'fake_path'
         hit.meta.inner_hits.lines = [self.create_inner_hit(0)]
         hit.lines = [self.create_line('+', 'This is an addition')]
@@ -36,7 +36,7 @@ class SearchTest(unittest.TestCase):
 
     def test_print_removal(self):
         hit = mock.MagicMock()
-        hit.commit_sha = 'fake_sha'
+        hit.sha = 'fake_sha'
         hit.path = 'fake_path'
         hit.meta.inner_hits.lines = [self.create_inner_hit(0)]
         hit.lines = [self.create_line('-', 'This is an removal')]
@@ -47,7 +47,7 @@ class SearchTest(unittest.TestCase):
 
     def test_context_no_extra_lines(self):
         hit = mock.MagicMock()
-        hit.commit_sha = 'fake_sha'
+        hit.sha = 'fake_sha'
         hit.path = 'fake_path'
         hit.meta.inner_hits.lines = [self.create_inner_hit(0)]
         hit.lines = [self.create_line('-', 'This is an removal')]
@@ -58,7 +58,7 @@ class SearchTest(unittest.TestCase):
 
     def test_context_extra_lines(self):
         hit = mock.MagicMock()
-        hit.commit_sha = 'fake_sha'
+        hit.sha = 'fake_sha'
         hit.path = 'fake_path'
         hit.meta.inner_hits.lines = [self.create_inner_hit(5)]
         hit.lines = [self.create_line('-', 'This is an removal'),
@@ -84,7 +84,7 @@ class SearchTest(unittest.TestCase):
 
     def test_no_color(self):
         hit = mock.MagicMock()
-        hit.commit_sha = 'fake_sha'
+        hit.sha = 'fake_sha'
         hit.path = 'fake_path'
         hit.meta.inner_hits.lines = [self.create_inner_hit(5)]
         hit.lines = [self.create_line('-', 'This is an removal'),
