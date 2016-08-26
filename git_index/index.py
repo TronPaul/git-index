@@ -54,15 +54,18 @@ class DiffHunk(DocType):
     })
 
 
-def index(repo, es, commit, follow=False, mappings=True):
+def index(repo, es, commit, all=False, follow=False, mappings=True):
     commit = repo.revparse_single(commit)
     if mappings:
         Commit.init(get_index_name(repo))
         DiffHunk.init(get_index_name(repo))
-    if not follow:
-        documents = commit_documents(repo, commit)
+    if all:
+        commits = []
+    elif follow:
+        commits = repo.walk(commit.id)
     else:
-        documents = chain.from_iterable(commit_documents(repo, c) for c in repo.walk(commit.id))
+        commits = [commit]
+    documents = chain.from_iterable(commit_documents(repo, c) for c in commits)
     res = [rv for rv in streaming_bulk(es, documents, expand_action_callback=expand_doc_callback(get_index_name(repo)))]
     print("Successfully indexed {}/{} documents".format(sum(1 for r, _ in res if r), len(res)))
 

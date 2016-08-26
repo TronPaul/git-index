@@ -24,8 +24,9 @@ def index_entry():
     parser.add_argument(metavar='commit-ish', default='HEAD', nargs='?', dest='commit')
     parser.add_argument('--follow', action='store_true', default=False, help='Also index commits reachable by following <commit-ish>')
     parser.add_argument('--no-mappings', action='store_false', dest='mappings', default=True, help='Do not send mappings to Elasticsearch')
+    parser.add_argument('--all', action='store_true', default=False, help='Index all commits')
     args = parser.parse_args()
-    index(repo, es, args.commit, follow=args.follow, mappings=args.mappings)
+    index(repo, es, args.commit, all=args.all, follow=args.follow, mappings=args.mappings)
 
 
 def search_entry():
