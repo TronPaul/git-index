@@ -13,7 +13,8 @@ setup(
         'elasticsearch>=2.3.0',
         'elasticsearch-dsl>=2.1.0',
         'pygit2>=0.24.1',
-        'termcolor>=1.1.0'
+        'termcolor>=1.1.0',
+        'iso8601>=0.1.11'
     ],
     entry_points={
         'console_scripts': [

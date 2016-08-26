@@ -7,7 +7,7 @@ try:
     from StringIO import StringIO
 except ImportError:
     from io import StringIO
-from git_index.search import print_hit
+from git_index.search import print_diff_hunk
 
 
 class SearchTest(unittest.TestCase):
@@ -31,7 +31,7 @@ class SearchTest(unittest.TestCase):
         hit.lines = [self.create_line('+', 'This is an addition')]
         hit.old_start = hit.new_start = 0
         file = StringIO()
-        print_hit(hit, file, context=None)
+        print_diff_hunk(hit, file, context=None)
         self.assertEqual(file.getvalue(), '\x1b[33mcommit fake_sha\x1b[0m\n\x1b[1mpath /fake_path\x1b[0m\n\x1b[36m@@ -0,0 +0,1 @@\x1b[0m\n\x1b[1m\x1b[32m+This is an addition\x1b[0m\n')
 
     def test_print_removal(self):
@@ -42,7 +42,7 @@ class SearchTest(unittest.TestCase):
         hit.lines = [self.create_line('-', 'This is an removal')]
         hit.old_start = hit.new_start = 0
         file = StringIO()
-        print_hit(hit, file, context=None)
+        print_diff_hunk(hit, file, context=None)
         self.assertEqual(file.getvalue(), '\x1b[33mcommit fake_sha\x1b[0m\n\x1b[1mpath /fake_path\x1b[0m\n\x1b[36m@@ -0,1 +0,0 @@\x1b[0m\n\x1b[1m\x1b[31m-This is an removal\x1b[0m\n')
 
     def test_context_no_extra_lines(self):
@@ -53,7 +53,7 @@ class SearchTest(unittest.TestCase):
         hit.lines = [self.create_line('-', 'This is an removal')]
         hit.old_start = hit.new_start = 0
         file = StringIO()
-        print_hit(hit, file, context=5)
+        print_diff_hunk(hit, file, context=5)
         self.assertEqual(file.getvalue(), '\x1b[33mcommit fake_sha\x1b[0m\n\x1b[1mpath /fake_path\x1b[0m\n\x1b[36m@@ -0,1 +0,0 @@\x1b[0m\n\x1b[1m\x1b[31m-This is an removal\x1b[0m\n')
 
     def test_context_extra_lines(self):
@@ -73,7 +73,7 @@ class SearchTest(unittest.TestCase):
                      self.create_line('+', 'This is an addition')]
         hit.old_start = hit.new_start = 0
         file = StringIO()
-        print_hit(hit, file, context=5)
+        print_diff_hunk(hit, file, context=5)
         self.assertEqual(file.getvalue(), ('\x1b[33mcommit fake_sha\x1b[0m\n\x1b[1mpath /fake_path\x1b[0m\n'
                                            '\x1b[36m@@ -0,5 +0,5 @@\x1b[0m\n'
                                            '\x1b[31m-This is an removal\x1b[0m\n\x1b[32m+This is an addition\x1b[0m\n'
@@ -99,7 +99,7 @@ class SearchTest(unittest.TestCase):
                      self.create_line('+', 'This is an addition')]
         hit.old_start = hit.new_start = 0
         file = StringIO()
-        print_hit(hit, file, context=5, colorize=False)
+        print_diff_hunk(hit, file, context=5, colorize=False)
         self.assertEqual(file.getvalue(), ('commit fake_sha\npath /fake_path\n'
                                            '@@ -0,5 +0,5 @@\n'
                                            '-This is an removal\n+This is an addition\n'

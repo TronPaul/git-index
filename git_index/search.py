@@ -1,5 +1,7 @@
 from __future__ import print_function
 import contextlib
+import datetime
+import iso8601
 import itertools
 import operator
 import subprocess
@@ -31,12 +33,17 @@ def relevant_line_numbers(lines, offsets, context):
 
 
 def tree_sort_hits(repo, hits):
-    hit_dict = {h.commit_sha: h for h in hits}
+    hit_dict = {}
+    for h in hits:
+        if h.meta.doc_type == 'diff_hunk':
+            hit_dict.setdefault(h.commit_sha, []).append(h)
+        elif h.meta.doc_type == 'commit':
+            hit_dict.setdefault(h.sha, []).append(h)
     sorted_hits = []
     # TODO: only sorts from head down
     for c in repo.walk(repo.head.target, pygit2.GIT_SORT_TOPOLOGICAL):
         if str(c.id) in hit_dict:
-            sorted_hits.append(hit_dict[str(c.id)])
+            sorted_hits.extend(hit_dict[str(c.id)])
             if len(sorted_hits) == len(hits):
                 break
     return sorted_hits
@@ -50,7 +57,7 @@ def line_count(lines, type='-'):
     return sum([1 for l in lines if l.type in (type, ' ')])
 
 
-def print_hit(hit, out_file, context=5, colorize=True):
+def print_diff_hunk(hit, out_file, context=5, colorize=True):
     colors = get_colors(colorize)
     print('{}commit {}{}'.format(colors['yellow'], hit.commit_sha, colors['ENDC']), file=out_file)
     print('{}path /{}{}'.format(colors['bold'], hit.path, colors['ENDC']), file=out_file)
@@ -90,9 +97,17 @@ def open_pager(args):
         pass
 
 
+def print_commit(hit, out_file, colorize=True):
+    colors = get_colors(colorize)
+    print('{}commit {}{}'.format(colors['yellow'], hit.sha, colors['ENDC']), file=out_file)
+    print('Author: {} <{}>'.format(hit.author.name, hit.author.email), file=out_file)
+    print('Date:   {}'.format(iso8601.parse_date(hit.committed_date).strftime('%a %b %d %H:%M:%S %z')), file=out_file)
+    print('\n\t{}'.format(hit.message), file=out_file)
+
+
 def search(repo, query, tree_sort=True, pager=True, context=5, colorize=True):
     s = Search()
-    q = Q('nested', path='lines', inner_hits={}, query=Q({'match': {'lines.content': query}}) & Q({'term': {'lines.type': '+'}}))
+    q = Q('match', message=query) | Q('nested', path='lines', inner_hits={}, query=Q({'match': {'lines.content': query}}) & Q({'term': {'lines.type': '+'}}))
     if tree_sort:
         q = Q('constant_score', query=q)
     s.query = q
@@ -106,5 +121,8 @@ def search(repo, query, tree_sort=True, pager=True, context=5, colorize=True):
         else:
             out = None
         for h in hits:
-            print_hit(h, out, colorize=colorize, context=context)
+            if h.meta.doc_type == 'diff_hunk':
+                print_diff_hunk(h, out, colorize=colorize, context=context)
+            elif h.meta.doc_type == 'commit':
+                print_commit(h, out, colorize=colorize)
 

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, tzinfo, timedelta
 from itertools import chain
 
 from elasticsearch.helpers import streaming_bulk
@@ -67,9 +67,24 @@ def index(repo, es, commit, follow=False, mappings=True):
     print("Successfully indexed {}/{} documents".format(sum(1 for r, _ in res if r), len(res)))
 
 
+def tz_from_offset(offset):
+    class tz(tzinfo):
+        def utcoffset(self, dt):
+            return timedelta(minutes=offset)
+
+        def dst(self, dt):
+            return timedelta(0)
+
+        def tzname(self, dt):
+            return None
+    return tz()
+
+
 def commit_documents(repo, commit):
+    commit_date = datetime.fromtimestamp(commit.commit_time, tz_from_offset(commit.commit_time_offset))
+    #import pdb; pdb.set_trace()
     yield Commit(sha=str(commit.id), author=dict(name=commit.author.name, email=commit.author.email),
-                 committed_date=datetime.fromtimestamp(commit.commit_time), message=commit.message)
+                 committed_date=commit_date, message=commit.message)
     if commit.parents:
         diff = repo.diff(commit.parents[0], commit)
     else:
