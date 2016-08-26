@@ -82,7 +82,6 @@ def tz_from_offset(offset):
 
 def commit_documents(repo, commit):
     commit_date = datetime.fromtimestamp(commit.commit_time, tz_from_offset(commit.commit_time_offset))
-    #import pdb; pdb.set_trace()
     yield Commit(sha=str(commit.id), author=dict(name=commit.author.name, email=commit.author.email),
                  committed_date=commit_date, message=commit.message)
     if commit.parents:
