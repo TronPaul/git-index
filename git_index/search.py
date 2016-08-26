@@ -105,13 +105,13 @@ def print_commit(hit, out_file, colorize=True):
     print('\n\t{}'.format(hit.message), file=out_file)
 
 
-def search(repo, query, tree_sort=True, pager=True, context=5, colorize=True):
+def search(repo, query, limit, tree_sort=True, pager=True, context=5, colorize=True):
     s = Search()
     q = Q('match', message=dict(query=query, analyzer='code')) | Q('nested', path='lines', inner_hits={}, query=Q({'match': {'lines.content': query}}) & Q({'term': {'lines.type': '+'}}))
     if tree_sort:
         q = Q('constant_score', query=q)
     s.query = q
-    rv = s.execute()
+    rv = s[:limit].execute()
     hits = rv.hits
     if tree_sort:
         hits = tree_sort_hits(repo, hits)

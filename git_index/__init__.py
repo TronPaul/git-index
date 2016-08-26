@@ -34,5 +34,6 @@ def search_entry():
     parser.add_argument('--no-pager', action='store_false', dest='pager', default=True, help='Do not use a pager (ie less)')
     parser.add_argument('--no-color', action='store_false', dest='colorize', default=True, help='Do not colorize output')
     parser.add_argument('--context', type=int, default=5, metavar='NUM', help='Print NUM lines of context around hits')
+    parser.add_argument('--limit', '-l', type=int, default=10, dest='limit', metavar='COUNT', help='Print COUNT results from search')
     args = parser.parse_args()
-    search(repo, args.query, pager=args.pager, context=args.context, colorize=args.colorize)
+    search(repo, args.query, args.limit, pager=args.pager, context=args.context, colorize=args.colorize)
