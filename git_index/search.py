@@ -1,6 +1,5 @@
 from __future__ import print_function
 import contextlib
-import datetime
 import iso8601
 import itertools
 import operator
