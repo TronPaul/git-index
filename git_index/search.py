@@ -8,7 +8,7 @@ import pygit2
 from itertools import groupby
 from elasticsearch_dsl import Q, Search
 from termcolor import COLORS, ATTRIBUTES
-from git_index.ctx import repo, index_name, code_analyzer
+from git_index.ctx import repo, config
 
 
 def get_colors(use=True):
@@ -104,8 +104,8 @@ def print_commit(hit, out_file, colorize=True):
 
 
 def search(query, limit, tree_sort=True, pager=True, context=5, colorize=True):
-    s = Search(index=index_name)
-    q = Q('match', message=dict(query=query, analyzer=code_analyzer)) | Q('nested', path='lines', inner_hits={}, query=Q({'match': {'lines.content': query}}) & Q({'term': {'lines.type': '+'}}))
+    s = Search(index=config.index_name)
+    q = Q('match', message=dict(query=query, analyzer=config.code_analyzer)) | Q('nested', path='lines', inner_hits={}, query=Q({'match': {'lines.content': query}}) & Q({'term': {'lines.type': '+'}}))
     if tree_sort:
         q = Q('constant_score', query=q)
     s.query = q

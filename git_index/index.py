@@ -4,11 +4,11 @@ from itertools import chain
 
 from elasticsearch.helpers import streaming_bulk
 from elasticsearch_dsl import DocType, String, Date, Nested, InnerObjectWrapper, Integer
-from git_index.ctx import repo, es, index_name, code_analyzer
+from git_index.ctx import repo, es, config
 
 
 def expand_doc(doc):
-    return dict(index=dict(_index=index_name, _type=doc._doc_type.name, _id=doc.meta.id)), doc.to_dict()
+    return dict(index=dict(_index=config.index_name, _type=doc._doc_type.name, _id=doc.meta.id)), doc.to_dict()
 
 
 class Author(InnerObjectWrapper):
@@ -38,15 +38,15 @@ class DiffHunk(DocType):
     new_lines = Integer()
     lines = Nested(properties={
         'type': String(index='not_analyzed'),
-        'content': String(analyzer=code_analyzer)  # TODO: make configurable
+        'content': String(analyzer=config.code_analyzer)  # TODO: make configurable
     })
 
 
 def index(commit, all=False, follow=False, mappings=True):
     commit = repo.revparse_single(commit)
     if mappings:
-        Commit.init(index_name)
-        DiffHunk.init(index_name)
+        Commit.init(config.index_name)
+        DiffHunk.init(config.index_name)
     if all:
         # Replace when you can iterate through all revisions via pygit2
         p = subprocess.Popen(['git', 'rev-list', '--all'], stdout=subprocess.PIPE, universal_newlines=True)
