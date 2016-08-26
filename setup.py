@@ -14,7 +14,8 @@ setup(
         'elasticsearch-dsl>=2.1.0',
         'pygit2>=0.24.1',
         'termcolor>=1.1.0',
-        'iso8601>=0.1.11'
+        'iso8601>=0.1.11',
+        'pathlib>=1.0.1'
     ],
     entry_points={
         'console_scripts': [

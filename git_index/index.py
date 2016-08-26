@@ -4,24 +4,11 @@ from itertools import chain
 
 from elasticsearch.helpers import streaming_bulk
 from elasticsearch_dsl import DocType, String, Date, Nested, InnerObjectWrapper, Integer
+from git_index.ctx import repo, es, index_name
 
 
-def get_index_name(repo):
-    if 'git-index.index' in repo.config:
-        return repo.config['git-index.index']
-    elif 'origin' in repo.remotes:
-        return repo.remotes['origin'].url.split(':')[1].split('/')[1].split('.')[0]
-    elif len(repo.remotes) != 0:
-        return next(repo.remotes).url.split(':')[1].split('/')[1].split('.')[0]
-    else:
-        return 'test'
-
-
-def expand_doc_callback(name):
-    def expand_doc(doc):
-        return dict(index=dict(_index=name, _type=doc._doc_type.name, _id=doc.meta.id)), doc.to_dict()
-
-    return expand_doc
+def expand_doc(doc):
+    return dict(index=dict(_index=index_name, _type=doc._doc_type.name, _id=doc.meta.id)), doc.to_dict()
 
 
 class Author(InnerObjectWrapper):
@@ -55,11 +42,11 @@ class DiffHunk(DocType):
     })
 
 
-def index(repo, es, commit, all=False, follow=False, mappings=True):
+def index(commit, all=False, follow=False, mappings=True):
     commit = repo.revparse_single(commit)
     if mappings:
-        Commit.init(get_index_name(repo))
-        DiffHunk.init(get_index_name(repo))
+        Commit.init(index_name)
+        DiffHunk.init(index_name)
     if all:
         # Replace when you can iterate through all revisions via pygit2
         p = subprocess.Popen(['git', 'rev-list', '--all'], stdout=subprocess.PIPE, universal_newlines=True)
@@ -68,8 +55,8 @@ def index(repo, es, commit, all=False, follow=False, mappings=True):
         commits = repo.walk(commit.id)
     else:
         commits = [commit]
-    documents = chain.from_iterable(commit_documents(repo, c) for c in commits)
-    res = [rv for rv in streaming_bulk(es, documents, expand_action_callback=expand_doc_callback(get_index_name(repo)))]
+    documents = chain.from_iterable(commit_documents(c) for c in commits)
+    res = [rv for rv in streaming_bulk(es, documents, expand_action_callback=expand_doc)]
     print("Successfully indexed {}/{} documents".format(sum(1 for r, _ in res if r), len(res)))
 
 
@@ -86,7 +73,7 @@ def tz_from_offset(offset):
     return tz()
 
 
-def commit_documents(repo, commit):
+def commit_documents(commit):
     commit_date = datetime.fromtimestamp(commit.commit_time, tz_from_offset(commit.commit_time_offset))
     doc_id = str(commit.commit_time) + str(commit.id)[:7]
     yield Commit(sha=str(commit.id), author=dict(name=commit.author.name, email=commit.author.email),
