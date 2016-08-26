@@ -4,7 +4,7 @@ from itertools import chain
 
 from elasticsearch.helpers import streaming_bulk
 from elasticsearch_dsl import DocType, String, Date, Nested, InnerObjectWrapper, Integer
-from git_index.ctx import repo, es, index_name
+from git_index.ctx import repo, es, index_name, code_analyzer
 
 
 def expand_doc(doc):
@@ -38,7 +38,7 @@ class DiffHunk(DocType):
     new_lines = Integer()
     lines = Nested(properties={
         'type': String(index='not_analyzed'),
-        'content': String(analyzer='code')  # TODO: make configurable
+        'content': String(analyzer=code_analyzer)  # TODO: make configurable
     })
 
 

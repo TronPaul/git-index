@@ -22,6 +22,14 @@ def get_index_name(repo):
         return pathlib.Path(os.getcwd()).parts[-1]
 
 
+def get_code_analyzer(repo):
+    if 'git-index.code-analyzer' in repo.config:
+        return repo.config['git-index.code-analyzer']
+    else:
+        return 'code'
+
+
 repo = pygit2.Repository(os.getcwd())
 es = connections.create_connection(hosts=get_es_hosts(repo))
 index_name = get_index_name(repo)
+code_analyzer = get_code_analyzer(repo)
