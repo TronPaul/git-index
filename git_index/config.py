@@ -29,10 +29,10 @@ class Config:
         return self._es_hosts
 
     @property
-    def code_analyzer(self):
-        if not hasattr(self, '_code_analyzer'):
-            if 'git-index.code-analyzer' in self.repo.config:
-                self._code_analyzer = self.repo.config['git-index.code-analyzer']
+    def content_analyzer(self):
+        if not hasattr(self, '_content_analyzer'):
+            if 'git-index.analyzers.lines-content' in self.repo.config:
+                self._content_analyzer = self.repo.config['git-index.analyzers.lines-content']
             else:
-                self._code_analyzer = 'code'
-        return self._code_analyzer
+                self._content_analyzer = None
+        return self._content_analyzer

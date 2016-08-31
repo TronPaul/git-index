@@ -32,18 +32,22 @@ def relevant_line_numbers(lines, offsets, context):
                                              for o in offsets))
 
 
-def tree_sort_hits(repo, hits):
+def tree_sort_hits(hits):
     hit_dict = {}
     for h in hits:
         if h.meta.doc_type in ('diff_hunk', 'commit'):
             hit_dict.setdefault(h.sha, []).append(h)
+    # pygit2 does not have a good git rev-list analog
+    p = subprocess.Popen(['git', 'rev-list'] + [s for s in hit_dict], stdout=subprocess.PIPE, universal_newlines=True)
     sorted_hits = []
-    # TODO: only sorts from head down
-    for c in repo.walk(repo.head.target, pygit2.GIT_SORT_TOPOLOGICAL):
-        if str(c.id) in hit_dict:
-            sorted_hits.extend(hit_dict[str(c.id)])
+    for s in p.stdout:
+        s = s.strip()
+        if s in hit_dict:
+            sorted_hits.extend(hit_dict[s])
             if len(sorted_hits) == len(hits):
                 break
+    p.stdout.close()
+    p.wait()
     return sorted_hits
 
 
@@ -105,14 +109,14 @@ def print_commit(hit, out_file, colorize=True):
 
 def search(query, limit, tree_sort=True, pager=True, context=5, colorize=True):
     s = Search(index=config.index_name)
-    q = Q('match', message=dict(query=query, analyzer=config.code_analyzer)) | Q('nested', path='lines', inner_hits={}, query=Q({'match': {'lines.content': query}}) & Q({'term': {'lines.type': '+'}}))
+    q = Q('match', message=dict(query=query, analyzer=config.content_analyzer)) | Q('nested', path='lines', inner_hits={}, query=Q({'match': {'lines.content': query}}) & Q({'term': {'lines.type': '+'}}))
     if tree_sort:
         q = Q('constant_score', query=q)
     s.query = q
     rv = s[:limit].execute()
     hits = rv.hits
     if tree_sort:
-        hits = tree_sort_hits(repo, hits)
+        hits = tree_sort_hits(hits)
     with contextlib.ExitStack() as stack:
         if pager:
             out = stack.enter_context(open_pager(['less', '-F', '-R', '-S', '-X', '-K']))
@@ -123,4 +127,3 @@ def search(query, limit, tree_sort=True, pager=True, context=5, colorize=True):
                 print_diff_hunk(h, out, colorize=colorize, context=context)
             elif h.meta.doc_type == 'commit':
                 print_commit(h, out, colorize=colorize)
-
